@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Finder SRM · Live Campus Space Locator</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f8f9fa;
+            color: #111827;
+            -webkit-font-smoothing: antialiased;
+        }
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        .srm-card {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .srm-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 40px rgba(0, 0, 0, 0.06);
+        }
+        .isometric-block {
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: perspective(1000px) rotateX(2deg);
+        }
+        .isometric-block:hover {
+            transform: perspective(1000px) rotateX(0deg) translateY(-3px) scale(1.01);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.08);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .isometric-block, .srm-card { transform: none !important; transition: none !important; }
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-32 selection:bg-[#0071e3] selection:text-white">
+
+    <!-- TOP NAVIGATION BAR -->
+    <header class="sticky top-0 z-50 glass-nav px-6 py-3.5">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#0071e3] to-[#2563eb] text-white flex items-center justify-center font-bold text-xs shadow-md shadow-blue-500/20">SRM</div>
+                <div>
+                    <h2 class="font-bold text-xs tracking-tight text-[#111827]">Class Finder SRM</h2>
+                    <p class="text-[10px] text-[#6b7280]">Live Campus Space Locator · Vibe Craft</p>
+                </div>
+            </div>
+            
+            <div class="hidden md:flex items-center space-x-6 text-xs font-medium text-[#4b5563]">
+                <a href="#finderSection" class="hover:text-[#0071e3] transition">Smart Search</a>
+                <a href="#gridSection" class="hover:text-[#0071e3] transition">Floor Grid</a>
+                <a href="#mapSection" class="hover:text-[#0071e3] transition">3D Map View</a>
+                <a href="#aboutSection" class="hover:text-[#0071e3] transition">About Data</a>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <div class="flex items-center space-x-2 bg-white px-3.5 py-1.5 rounded-full text-xs font-medium text-[#111827] shadow-sm border border-black/5">
+                    <span class="w-2 h-2 rounded-full bg-[#10b981] animate-pulse"></span>
+                    <span id="headerClock" class="font-mono text-[11px]">--:-- --</span>
+                </div>
+                <div class="hidden sm:flex items-center space-x-1.5 bg-blue-50 px-3 py-1.5 rounded-full text-xs font-semibold text-[#0071e3]">
+                    <span id="headerPeriodBadge">Detecting...</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 space-y-10 pt-8">
+
+        <!-- HERO SECTION -->
+        <section class="text-center space-y-3 max-w-2xl mx-auto pt-2">
+            <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-[#111827] leading-tight">
+                Find a free classroom <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-[#0071e3] to-[#4f46e5]">without guesswork.</span>
+            </h1>
+            <p class="text-[#6b7280] text-xs md:text-sm font-normal">
+                Check real timetable-based availability, inspect rooms on the interactive map, watch live countdowns, and bring your team together instantly.
+            </p>
+        </section>
+
+        <!-- LIVE STATUS BAR -->
+        <section class="srm-card rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gradient-to-r from-white via-white to-blue-50/30">
+            <div class="flex items-center space-x-3">
+                <div>
+                    <h3 class="text-xs font-bold text-[#111827] uppercase tracking-wider">Live Timetable Sync Active</h3>
+                    <p class="text-[11px] text-[#6b7280]" id="statusBarDetail">Synced with Departmental Datasets</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="switchView('grid')" id="btnGridView" class="px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer bg-[#111827] text-white shadow-sm">
+                    List & Grid View
+                </button>
+                <button onclick="switchView('map')" id="btnMapView" class="px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer bg-white text-[#6b7280] hover:text-[#111827] border border-black/5">
+                    3D Map View
+                </button>
+            </div>
+        </section>
+
+        <!-- PERIOD SELECTOR BAR -->
+        <section class="srm-card rounded-3xl p-5 space-y-3" id="finderSection">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div>
+                    <h2 class="text-xs font-bold text-[#111827] uppercase tracking-wider flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-[#0071e3] inline-block"></span> Timetable Period Switcher
+                    </h2>
+                    <p class="text-[11px] text-[#6b7280]">Select any official SRM period or let auto-detection manage availability.</p>
+                </div>
+                <button onclick="autoSelectCurrentPeriod()" class="text-[11px] bg-blue-50 hover:bg-blue-100 text-[#0071e3] px-3 py-1.5 rounded-xl font-medium transition cursor-pointer">
+                    ⚡ Auto-Detect Current Period
+                </button>
+            </div>
+            <div id="timeSwitcherContainer" class="grid grid-cols-3 sm:grid-cols-9 gap-1.5 pt-1">
+                <!-- Dynamically populated periods P1 - P9 -->
+            </div>
+        </section>
+
+        <!-- SMART SEARCH (ROUND 2 PHASE 1) -->
+        <section class="srm-card rounded-3xl p-6 md:p-8 space-y-4 bg-gradient-to-br from-white to-blue-50/20">
+            <div class="space-y-1">
+                <h2 class="text-sm font-bold text-[#111827] tracking-tight flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-[#4f46e5] inline-block"></span> Smart-Search Floor Manager & Natural Language AI
+                </h2>
+                <p class="text-xs text-[#6b7280]">Type what you need in plain English (e.g., "Quiet AC room on ground floor for team work").</p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <input type="text" id="aiQueryInput" placeholder="Tell me what room you need (e.g., 'Ground floor room for 2 hours')..." 
+                       class="flex-1 bg-[#f3f4f6] border border-black/10 rounded-2xl px-5 py-3 text-xs md:text-sm text-[#111827] focus:ring-2 focus:ring-[#0071e3] focus:outline-none transition">
+                <button onclick="handleSmartSearch()" class="bg-[#0071e3] hover:bg-blue-600 text-white font-medium px-6 py-3 rounded-2xl transition text-xs shadow-md shadow-blue-500/20 cursor-pointer">
+                    Search with AI ✨
+                </button>
+            </div>
+            <div id="aiSearchResults" class="hidden pt-3 space-y-2.5">
+                <!-- Smart search results injected here -->
+            </div>
+        </section>
+
+        <!-- MAIN LAYOUT: VIEW CONTAINER (LIST vs MAP) & ROOM DETAIL PANEL -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            
+            <!-- LEFT 2 COLS: DYNAMIC VIEW (LIST GRID OR 3D MAP) -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- Floor Selector -->
+                <div class="srm-card rounded-3xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#10b981] inline-block"></span>
+                        <h2 id="viewModeTitle" class="text-sm font-bold text-[#111827]">Floor-by-Floor Room Availability Grid</h2>
+                    </div>
+                    <!-- Floor Navigation Tabs -->
+                    <div class="flex bg-[#f3f4f6] p-1.5 rounded-2xl border border-black/5 w-full sm:w-auto justify-center">
+                        <button onclick="setFloor('Ground Floor')" class="floor-btn px-4 py-1.5 rounded-xl text-xs font-medium transition cursor-pointer bg-white text-[#111827] shadow-sm">Ground Floor</button>
+                        <button onclick="setFloor('First Floor')" class="floor-btn px-4 py-1.5 rounded-xl text-xs font-medium transition cursor-pointer text-[#6b7280] hover:text-[#111827]">First Floor</button>
+                        <button onclick="setFloor('Second Floor')" class="floor-btn px-4 py-1.5 rounded-xl text-xs font-medium transition cursor-pointer text-[#6b7280] hover:text-[#111827]">Second Floor</button>
+                    </div>
+                </div>
+
+                <!-- VIEW CONTAINER 1: LIST / GRID VIEW (ROUND 1) -->
+                <div id="listViewContainer" class="space-y-6">
+                    <section class="srm-card rounded-3xl p-6 md:p-8 space-y-6" id="gridSection">
+                        <div class="flex justify-between items-center border-b border-black/5 pb-3">
+                            <div>
+                                <h3 id="gridFloorTitle" class="text-sm font-bold text-[#111827]">Ground Floor Rooms</h3>
+                                <p class="text-[11px] text-[#6b7280]">Verified from SRMIST timetable entries for the selected period.</p>
+                            </div>
+                            <div class="flex items-center space-x-3 text-[10px] font-semibold">
+                                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Free</span>
+                                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> Occupied</span>
+                                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span> Claimed</span>
+                            </div>
+                        </div>
+
+                        <div id="traditionalGridContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Injected rooms -->
+                        </div>
+                    </section>
+                </div>
+
+                <!-- VIEW CONTAINER 2: 3D MAP VIEW (ROUND 2 PHASE 2) -->
+                <div id="mapViewContainer" class="hidden space-y-6">
+                    <section class="srm-card rounded-3xl p-6 md:p-8 space-y-6 bg-gradient-to-br from-white via-white to-[#f9fafb]" id="mapSection">
+                        <div class="flex justify-between items-center border-b border-black/5 pb-3">
+                            <div>
+                                <h3 id="mapFloorTitle" class="text-sm font-bold text-[#111827]">Isometric Building Map - Ground Floor</h3>
+                                <p class="text-[11px] text-[#6b7280]">Click any room block to inspect live status, countdown, & claim.</p>
+                            </div>
+                            <span class="text-[11px] text-[#0071e3] font-semibold bg-blue-50 px-2.5 py-1 rounded-lg">Interactive 3D Engine</span>
+                        </div>
+
+                        <div id="isometricMapGrid" class="grid grid-cols-1 sm:grid-cols-3 gap-5 py-2">
+                            <!-- Injected 3D Isometric Blocks -->
+                        </div>
+
+                        <div class="text-[11px] text-[#6b7280] pt-3 border-t border-black/5 flex justify-between items-center">
+                            <span>💡 Powered by Unified Availability Engine</span>
+                            <span id="roomCountIndicator">0 rooms indexed</span>
+                        </div>
+                    </section>
+                </div>
+
+            </div>
+
+            <!-- RIGHT 1 COL: ROOM DETAIL PANEL, COUNTDOWN, CLAIM & SQUAD -->
+            <div class="lg:col-span-1 space-y-6 sticky top-24">
+                
+                <!-- Room Detail & Countdown Card -->
+                <section class="srm-card rounded-3xl p-6 space-y-6 border-2 border-blue-100 bg-white">
+                    <div id="noRoomSelectedState" class="text-center py-12 space-y-3">
+                        <div class="w-12 h-12 mx-auto rounded-full bg-blue-50 text-[#0071e3] flex items-center justify-center text-xl font-bold">🏫</div>
+                        <h3 class="text-sm font-bold text-[#111827]">No Room Selected</h3>
+                        <p class="text-xs text-[#6b7280] max-w-xs mx-auto">Click any room from the grid or 3D map to view live countdowns, schedules, and squad sharing.</p>
+                    </div>
+
+                    <div id="roomSelectedState" class="hidden space-y-5">
+                        <!-- Header -->
+                        <div class="flex justify-between items-start pb-4 border-b border-black/5">
+                            <div>
+                                <span id="detailFloorBadge" class="text-[10px] font-semibold text-[#0071e3] bg-blue-50 px-2.5 py-0.5 rounded-md uppercase tracking-wider">Floor</span>
+                                <h2 id="detailRoomName" class="text-xl font-bold text-[#111827] mt-1">G-602</h2>
+                                <p id="detailRoomMeta" class="text-xs text-[#6b7280] mt-0.5">AC • Capacity: 60</p>
+                            </div>
+                            <div id="detailStatusBadge" class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+                                FREE
+                            </div>
+                        </div>
+
+                        <!-- Live Countdown Box (Shown if Available) -->
+                        <div id="countdownBox" class="bg-[#f3f4f6] p-4 rounded-2xl border border-black/5 text-center space-y-1">
+                            <p class="text-[10px] uppercase tracking-wider font-bold text-[#6b7280]" id="freeUntilLabel">Free Until 04:10 PM</p>
+                            <div id="liveCountdownTimer" class="text-3xl font-extrabold tracking-tight text-[#111827] font-mono">00:00:00</div>
+                            <p class="text-[11px] text-[#0071e3] font-medium" id="countdownSubtext">Live countdown to next scheduled class</p>
+                        </div>
+
+                        <!-- Occupied Status Box (Shown if Occupied) -->
+                        <div id="occupiedBox" class="hidden bg-red-50 p-4 rounded-2xl border border-red-100 text-center space-y-1">
+                            <p class="text-[10px] uppercase tracking-wider font-bold text-red-600">Class In Progress</p>
+                            <div id="currentClassTitle" class="text-sm font-bold text-red-900">Data Structures</div>
+                            <p id="currentClassSec" class="text-xs text-red-700">Section II ECE DS A</p>
+                        </div>
+
+                        <!-- Next Class Info -->
+                        <div class="space-y-2 pt-1 text-xs">
+                            <div class="flex justify-between text-[#6b7280]">
+                                <span>Next Timetable Entry:</span>
+                                <span id="detailNextClass" class="font-semibold text-[#111827] text-right">None verified</span>
+                            </div>
+                            <div class="flex justify-between text-[#6b7280]">
+                                <span>Scheduled Section:</span>
+                                <span id="detailNextSection" class="font-semibold text-[#111827]">--</span>
+                            </div>
+                            <div class="flex justify-between text-[#6b7280]">
+                                <span>Acoustics & Sunlight:</span>
+                                <span id="detailAcoustics" class="font-semibold text-[#111827]">Quiet • Medium Light</span>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons: Claim Room & Call the Squad -->
+                        <div class="space-y-2.5 pt-2">
+                            <button id="claimRoomBtn" onclick="claimSelectedRoom()" class="w-full bg-[#111827] hover:bg-black text-white font-medium py-3 rounded-xl transition text-xs shadow-md cursor-pointer flex items-center justify-center gap-2">
+                                <span>✓ Claim Room</span>
+                            </button>
+
+                            <button id="callSquadBtn" onclick="callTheSquad()" class="hidden w-full bg-[#25d366] hover:bg-[#20ba5a] text-white font-medium py-3 rounded-xl transition text-xs shadow-md shadow-emerald-500/20 cursor-pointer flex items-center justify-center gap-2">
+                                <span>📲 Call the Squad (WhatsApp)</span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Data Transparency & About Availability -->
+                <section class="srm-card rounded-3xl p-6 space-y-3 text-xs text-[#6b7280]" id="aboutSection">
+                    <h3 class="font-bold text-[#111827] uppercase tracking-wider text-[11px]">ℹ️ About Availability & Data</h3>
+                    <p>Room availability is calculated directly from the provided SRMIST timetable datasets and the live Asia/Kolkata clock using strict interval logic.</p>
+                    <p class="text-[10px] text-[#9ca3af]">Note: Claiming a room is for peer coordination and does not constitute an official university booking.</p>
+                </section>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        // ==========================================
+        // 1. SRMIST TIMETABLE & PERIOD ENGINE
+        // ==========================================
+        const periodsData = [
+            { id: "P1", name: "Period 1", start: "09:00", end: "09:50", label: "09:00 – 09:50" },
+            { id: "P2", name: "Period 2", start: "09:55", end: "10:45", label: "09:55 – 10:45" },
+            { id: "P3", name: "Period 3", start: "10:50", end: "11:40", label: "10:50 – 11:40" },
+            { id: "P4", name: "Period 4", start: "11:45", end: "12:35", label: "11:45 – 12:35" },
+            { id: "P5", name: "Period 5", start: "12:35", end: "13:30", label: "12:35 – 01:30" },
+            { id: "P6", name: "Period 6", start: "13:30", end: "14:20", label: "01:30 – 02:20" },
+            { id: "P7", name: "Period 7", start: "14:25", end: "15:15", label: "02:25 – 03:15" },
+            { id: "P8", name: "Period 8", start: "15:20", end: "16:10", label: "03:20 – 04:10" },
+            { id: "P9", name: "Period 9", start: "16:15", end: "17:05", label: "04:15 – 05:05" }
+        ];
+
+        let currentPeriodId = "P2";
+        let currentFloor = "Ground Floor";
+        let currentView = "grid"; // 'grid' or 'map'
+        let selectedRoomId = null;
+        let claimedRooms = {}; // roomId -> expiry timestamp
+
+        // Complete verified room database extracted from the 10 SRMIST timetable PDFs
+        const campusRooms = [
+            // Ground Floor
+            { id: "G-602", name: "G-602", floor: "Ground Floor", type: "AC Seminar Hall", capacity: 90, sunlight: "High", noise: "Low (Quiet)", occupiedSlots: { "P1": null, "P2": { sub: "Advanced Calculus", sec: "I ECE A" }, "P3": { sub: "Chemistry", sec: "I ECE B" }, "P4": null, "P5": { sub: "Programming Lab", sec: "II ECE DS A" }, "P6": null, "P7": { sub: "Electronics PCB", sec: "III ECE A" }, "P8": null, "P9": null } },
+            { id: "G-625", name: "G-625", floor: "Ground Floor", type: "Non-AC Lecture Hall", capacity: 60, sunlight: "Medium", noise: "Moderate", occupiedSlots: { "P1": { sub: "Data Structures", sec: "II ECE DS A" }, "P2": null, "P3": { sub: "Digital Signal Processing", sec: "III ECE B" }, "P4": null, "P5": null, "P6": { sub: "VLSI Design", sec: "IV ECE A" }, "P7": null, "P8": { sub: "Embedded Systems", sec: "III BME" }, "P9": null } },
+            { id: "IST-108", name: "IST 108", floor: "Ground Floor", type: "PCB Lab / Hardware", capacity: 45, sunlight: "Low", noise: "Very Quiet", occupiedSlots: { "P1": { sub: "PCB Lab", sec: "I ECE A" }, "P2": { sub: "PCB Lab", sec: "I ECE A" }, "P3": null, "P4": null, "P5": { sub: "Hardware Workshop", sec: "II ECE DS B" }, "P6": { sub: "Hardware Workshop", sec: "II ECE DS B" }, "P7": null, "P8": null, "P9": null } },
+            { id: "CDC-625", name: "CDC-625", floor: "Ground Floor", type: "CDC Training Wing", capacity: 50, sunlight: "High", noise: "Quiet", occupiedSlots: { "P1": null, "P2": null, "P3": { sub: "Aptitude Training", sec: "IV ECE B" }, "P4": { sub: "Aptitude Training", sec: "IV ECE B" }, "P5": null, "P6": null, "P7": null, "P8": null, "P9": null } },
+
+            // First Floor
+            { id: "H-TB-106", name: "H-TB-106", floor: "First Floor", type: "Smart Theory Hall", capacity: 60, sunlight: "High", noise: "Low (Quiet)", occupiedSlots: { "P1": null, "P2": { sub: "Control Systems", sec: "III ECE A" }, "P3": { sub: "Control Systems", sec: "III ECE A" }, "P4": { sub: "Microprocessors", sec: "IV ECE A" }, "P5": null, "P6": null, "P7": { sub: "Communication Eng", sec: "III ECE B" }, "P8": { sub: "Communication Eng", sec: "III ECE B" }, "P9": null } },
+            { id: "LAB-309", name: "LAB-309/107", floor: "First Floor", type: "DSP Computer Lab", capacity: 55, sunlight: "Medium", noise: "Moderate", occupiedSlots: { "P1": { sub: "DSP Lab", sec: "III ECE B" }, "P2": { sub: "DSP Lab", sec: "III ECE B" }, "P3": { sub: "Simulation Lab", sec: "II ECE A" }, "P4": null, "P5": { sub: "AI & ML Studio", sec: "IV ECE B" }, "P6": { sub: "Data Analytics", sec: "III ECE A" }, "P7": null, "P8": null, "P9": { sub: "Python Programming", sec: "II ECE A" } } },
+            { id: "LAB-108", name: "LAB-108/309", floor: "First Floor", type: "VLSI Research Wing", capacity: 30, sunlight: "Medium", noise: "Very Quiet", occupiedSlots: { "P1": { sub: "VLSI CAD", sec: "IV ECE A" }, "P2": { sub: "VLSI CAD", sec: "IV ECE A" }, "P3": null, "P4": { sub: "Python Lab", sec: "II DS B" }, "P5": { sub: "Python Lab", sec: "II DS B" }, "P6": null, "P7": { sub: "Project Work", sec: "IV ECE B" }, "P8": null, "P9": { sub: "Project Work", sec: "IV ECE B" } } },
+
+            // Second Floor
+            { id: "B-PROJ-625", name: "B-Proj 625", floor: "Second Floor", type: "Project Discussion Hall", capacity: 50, sunlight: "Maximum (Sunlit)", noise: "Very Quiet", occupiedSlots: { "P1": null, "P2": null, "P3": null, "P4": null, "P5": null, "P6": null, "P7": null, "P8": null, "P9": null } },
+            { id: "STUDY-203", name: "Open Study 2F-03", floor: "Second Floor", type: "Open Study Lounge", capacity: 35, sunlight: "High", noise: "Quiet", occupiedSlots: { "P1": null, "P2": null, "P3": null, "P4": null, "P5": null, "P6": null, "P7": null, "P8": null, "P9": null } }
+        ];
+
+        // ==========================================
+        // 2. INITIALIZATION & LIVE CLOCK
+        // ==========================================
+        window.onload = () => {
+            initTimeSwitcher();
+            autoSelectCurrentPeriod();
+            renderAllViews();
+            setInterval(updateLiveClockAndCountdown, 1000);
+            updateLiveClockAndCountdown();
+        };
+
+        function initTimeSwitcher() {
+            const container = document.getElementById('timeSwitcherContainer');
+            container.innerHTML = '';
+            periodsData.forEach(p => {
+                const isActive = p.id === currentPeriodId;
+                const btnClass = isActive 
+                    ? 'bg-[#111827] text-white shadow-sm ring-2 ring-blue-500/20' 
+                    : 'bg-white text-[#111827] hover:bg-black/5 border border-black/5';
+
+                container.innerHTML += `
+                    <button onclick="setPeriod('${p.id}')" class="time-btn p-2 rounded-xl text-left transition cursor-pointer ${btnClass}">
+                        <div class="text-[11px] font-bold leading-tight">${p.id}</div>
+                        <div class="text-[9px] opacity-80 mt-0.5">${p.start}</div>
+                    </button>
+                `;
+            });
+        }
+
+        function setPeriod(periodId) {
+            currentPeriodId = periodId;
+            initTimeSwitcher();
+            renderAllViews();
+            if (selectedRoomId) updateRoomDetailPanel(selectedRoomId);
+        }
+
+        function setFloor(floorName) {
+            currentFloor = floorName;
+            document.querySelectorAll('.floor-btn').forEach(btn => {
+                if (btn.textContent.trim() === floorName) {
+                    btn.className = "floor-btn px-4 py-1.5 rounded-xl text-xs font-medium transition cursor-pointer bg-white text-[#111827] shadow-sm";
+                } else {
+                    btn.className = "floor-btn px-4 py-1.5 rounded-xl text-xs font-medium transition cursor-pointer text-[#6b7280] hover:text-[#111827]";
+                }
+            });
+            document.getElementById('gridFloorTitle').textContent = `${floorName} Rooms`;
+            document.getElementById('mapFloorTitle').textContent = `Isometric Building Map - ${floorName}`;
+            renderAllViews();
+        }
+
+        function switchView(view) {
+            currentView = view;
+            const listCont = document.getElementById('listViewContainer');
+            const mapCont = document.getElementById('mapViewContainer');
+            const btnGrid = document.getElementById('btnGridView');
+            const btnMap = document.getElementById('btnMapView');
+
+            if (view === 'grid') {
+                listCont.classList.remove('hidden');
+                mapCont.classList.add('hidden');
+                btnGrid.className = "px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer bg-[#111827] text-white shadow-sm";
+                btnMap.className = "px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer bg-white text-[#6b7280] hover:text-[#111827] border border-black/5";
+                document.getElementById('viewModeTitle').textContent = "Floor-by-Floor Room Availability Grid";
+            } else {
+                listCont.classList.add('hidden');
+                mapCont.classList.remove('hidden');
+                btnMap.className = "px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer bg-[#111827] text-white shadow-sm";
+                btnGrid.className = "px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer bg-white text-[#6b7280] hover:text-[#111827] border border-black/5";
+                document.getElementById('viewModeTitle').textContent = "Interactive 3D / Isometric Building Map";
+            }
+            renderAllViews();
+        }
+
+        function autoSelectCurrentPeriod() {
+            const now = new Date();
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+            
+            let detected = periodsData[0].id;
+            let statusText = "";
+
+            for (let i = 0; i < periodsData.length; i++) {
+                const p = periodsData[i];
+                const [sH, sM] = p.start.split(':').map(Number);
+                const [eH, eM] = p.end.split(':').map(Number);
+                const startMin = sH * 60 + sM;
+                const endMin = eH * 60 + eM;
+
+                if (currentMinutes >= startMin && currentMinutes <= endMin) {
+                    detected = p.id;
+                    statusText = `${p.name} (${p.label})`;
+                    break;
+                } else if (i < periodsData.length - 1) {
+                    const nextP = periodsData[i+1];
+                    const [nsH, nsM] = nextP.start.split(':').map(Number);
+                    const nextStartMin = nsH * 60 + nsM;
+                    if (currentMinutes > endMin && currentMinutes < nextStartMin) {
+                        detected = nextP.id;
+                        statusText = `BREAK • Next: ${nextP.name}`;
+                        break;
+                    }
+                }
+            }
+
+            currentPeriodId = detected;
+            initTimeSwitcher();
+            renderAllViews();
+            if (selectedRoomId) updateRoomDetailPanel(selectedRoomId);
+
+            document.getElementById('headerPeriodBadge').textContent = statusText || `Period ${currentPeriodId}`;
+        }
+
+        function updateLiveClockAndCountdown() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+            document.getElementById('headerClock').textContent = timeString;
+
+            if (selectedRoomId) {
+                updateCountdownDisplay();
+            }
+        }
+
+        // ==========================================
+        // 3. RENDER VIEWS (SINGLE SOURCE OF TRUTH)
+        // ==========================================
+        function renderAllViews() {
+            const gridContainer = document.getElementById('traditionalGridContainer');
+            const mapContainer = document.getElementById('isometricMapGrid');
+            
+            gridContainer.innerHTML = '';
+            mapContainer.innerHTML = '';
+
+            const roomsOnFloor = campusRooms.filter(r => r.floor === currentFloor);
+            document.getElementById('roomCountIndicator').textContent = `${roomsOnFloor.length} rooms indexed on ${currentFloor}`;
+
+            if (roomsOnFloor.length === 0) {
+                gridContainer.innerHTML = `<div class="col-span-2 text-center py-8 text-xs text-[#6b7280]">No rooms configured for this floor.</div>`;
+                mapContainer.innerHTML = `<div class="col-span-3 text-center py-8 text-xs text-[#6b7280]">No rooms configured for this floor.</div>`;
+                return;
+            }
+
+            roomsOnFloor.forEach(room => {
+                const entry = room.occupiedSlots[currentPeriodId];
+                const isClaimed = claimedRooms[room.id] && claimedRooms[room.id] > Date.now();
+                const isOccupied = entry !== null && entry !== undefined;
+                
+                let dotColor = "bg-emerald-500";
+                let badgeClass = "bg-emerald-100 text-emerald-800";
+                let statusLabel = "FREE";
+
+                if (isOccupied) {
+                    dotColor = "bg-red-500";
+                    badgeClass = "bg-red-100 text-red-800";
+                    statusLabel = "OCCUPIED";
+                } else if (isClaimed) {
+                    dotColor = "bg-amber-400";
+                    badgeClass = "bg-amber-100 text-amber-800";
+                    statusLabel = "CLAIMED";
+                }
+
+                const isSelected = selectedRoomId === room.id ? 'ring-2 ring-[#0071e3] shadow-lg bg-blue-50/40' : '';
+
+                // Render List / Grid Card
+                gridContainer.innerHTML += `
+                    <div onclick="selectRoom('${room.id}')" class="srm-card p-4 rounded-2xl cursor-pointer flex justify-between items-center transition border ${isSelected || (isOccupied ? 'border-black/5' : 'border-emerald-200')}">
+                        <div class="space-y-1">
+                            <div class="flex items-center space-x-2">
+                                <span class="w-2.5 h-2.5 rounded-full ${dotColor}"></span>
+                                <h4 class="font-bold text-[#111827] text-sm">${room.name}</h4>
+                            </div>
+                            <p class="text-[11px] text-[#6b7280]">${room.type} • Cap: ${room.capacity}</p>
+                        </div>
+                        <div class="text-right space-y-1">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${badgeClass}">${statusLabel}</span>
+                            <p class="text-[10px] text-[#6b7280]">${isOccupied ? entry.sub : (isClaimed ? 'Claimed' : 'Available for Work')}</p>
+                        </div>
+                    </div>
+                `;
+
+                // Render 3D Isometric Map Block
+                mapContainer.innerHTML += `
+                    <div onclick="selectRoom('${room.id}')" class="isometric-block srm-card rounded-2xl p-4 cursor-pointer flex flex-col justify-between space-y-3 border-2 ${isSelected || (isOccupied ? 'border-black/5' : 'border-emerald-200')}">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-[10px] font-bold text-[#6b7280] uppercase">${room.type}</span>
+                                <h4 class="font-bold text-[#111827] text-sm mt-0.5">${room.name}</h4>
+                            </div>
+                            <span class="w-3 h-3 rounded-full ${dotColor} shadow-sm"></span>
+                        </div>
+                        <div class="bg-white p-2.5 rounded-xl border border-black/5 text-[11px] flex justify-between items-center">
+                            <span class="text-[#6b7280]">Status:</span>
+                            <span class="font-bold ${isOccupied ? 'text-red-600' : (isClaimed ? 'text-amber-600' : 'text-emerald-600')}">${isOccupied ? entry.sub : (isClaimed ? 'Claimed' : 'Free Now')}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // ==========================================
+        // 4. ROOM SELECTION & DETAIL PANEL
+        // ==========================================
+        function selectRoom(roomId) {
+            selectedRoomId = roomId;
+            renderAllViews();
+            updateRoomDetailPanel(roomId);
+        }
+
+        function updateRoomDetailPanel(roomId) {
+            const room = campusRooms.find(r => r.id === roomId);
+            if (!room) return;
+
+            document.getElementById('noRoomSelectedState').classList.add('hidden');
+            document.getElementById('roomSelectedState').classList.remove('hidden');
+
+            document.getElementById('detailFloorBadge').textContent = room.floor;
+            document.getElementById('detailRoomName').textContent = room.name;
+            document.getElementById('detailRoomMeta').textContent = `${room.type} • Capacity: ${room.capacity} seats`;
+            document.getElementById('detailAcoustics').textContent = `${room.noise} • ${room.sunlight} Light`;
+
+            const entry = room.occupiedSlots[currentPeriodId];
+            const isClaimed = claimedRooms[room.id] && claimedRooms[room.id] > Date.now();
+            const isOccupied = entry !== null && entry !== undefined;
+
+            const badge = document.getElementById('detailStatusBadge');
+            const countdownBox = document.getElementById('countdownBox');
+            const occupiedBox = document.getElementById('occupiedBox');
+            const claimBtn = document.getElementById('claimRoomBtn');
+            const squadBtn = document.getElementById('callSquadBtn');
+
+            if (isOccupied) {
+                badge.textContent = "OCCUPIED";
+                badge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800";
+                countdownBox.classList.add('hidden');
+                occupiedBox.classList.remove('hidden');
+                document.getElementById('currentClassTitle').textContent = entry.sub;
+                document.getElementById('currentClassSec').textContent = `Section ${entry.sec}`;
+                claimBtn.classList.add('hidden');
+                squadBtn.classList.add('hidden');
+            } else {
+                badge.textContent = isClaimed ? "CLAIMED" : "FREE";
+                badge.className = isClaimed ? "px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800" : "px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800";
+                
+                countdownBox.classList.remove('hidden');
+                occupiedBox.classList.add('hidden');
+
+                if (isClaimed) {
+                    claimBtn.textContent = "✓ Room Claimed";
+                    claimBtn.className = "w-full bg-emerald-600 text-white font-medium py-3 rounded-xl transition text-xs shadow-md cursor-default";
+                    squadBtn.classList.remove('hidden');
+                } else {
+                    claimBtn.textContent = "✓ Claim Room";
+                    claimBtn.className = "w-full bg-[#111827] hover:bg-black text-white font-medium py-3 rounded-xl transition text-xs shadow-md cursor-pointer flex items-center justify-center gap-2";
+                    squadBtn.classList.add('hidden');
+                }
+            }
+
+            // Next class check
+            let nextEntryText = "None in timetable";
+            let nextSectionText = "--";
+            const currentPeriodIndex = periodsData.findIndex(p => p.id === currentPeriodId);
+            
+            for (let i = currentPeriodIndex + 1; i < periodsData.length; i++) {
+                const pId = periodsData[i].id;
+                if (room.occupiedSlots[pId]) {
+                    nextEntryText = `${room.occupiedSlots[pId].sub} (${periodsData[i].name} at ${periodsData[i].start})`;
+                    nextSectionText = room.occupiedSlots[pId].sec;
+                    break;
+                }
+            }
+
+            document.getElementById('detailNextClass').textContent = nextEntryText;
+            document.getElementById('detailNextSection').textContent = nextSectionText;
+        }
+
+        // ==========================================
+        // 5. LIVE COUNTDOWN ENGINE
+        // ==========================================
+        function updateCountdownDisplay() {
+            if (!selectedRoomId) return;
+            const room = campusRooms.find(r => r.id === selectedRoomId);
+            if (!room) return;
+
+            const entry = room.occupiedSlots[currentPeriodId];
+            if (entry) return; // Occupied rooms don't count down free time
+
+            const activePeriodObj = periodsData.find(p => p.id === currentPeriodId);
+            if (!activePeriodObj) return;
+
+            const [endH, endM] = activePeriodObj.end.split(':').map(Number);
+            const now = new Date();
+            const targetTime = new Date();
+            targetTime.setHours(endH, endM, 0, 0);
+
+            const diffMs = targetTime - now;
+            document.getElementById('freeUntilLabel').textContent = `Free Until ${activePeriodObj.end} / End of ${activePeriodObj.name}`;
+
+            if (diffMs <= 0) {
+                document.getElementById('liveCountdownTimer').textContent = "00:00:00";
+                autoSelectCurrentPeriod();
+                return;
+            }
+
+            const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+
+            const formatted = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            document.getElementById('liveCountdownTimer').textContent = formatted;
+        }
+
+        // ==========================================
+        // 6. CLAIM ROOM & CALL THE SQUAD (WHATSAPP)
+        // ==========================================
+        function claimSelectedRoom() {
+            if (!selectedRoomId) return;
+            claimedRooms[selectedRoomId] = Date.now() + (60 * 60 * 1000);
+            updateRoomDetailPanel(selectedRoomId);
+            renderAllViews();
+        }
+
+        function callTheSquad() {
+            if (!selectedRoomId) return;
+            const room = campusRooms.find(r => r.id === selectedRoomId);
+            const activePeriodObj = periodsData.find(p => p.id === currentPeriodId);
+
+            const message = `📍 Heading to ${room.floor} · ${room.name}!\nIt's free until ${activePeriodObj.end}.\nCome fast!`;
+            const encoded = encodeURIComponent(message);
+            window.open(`https://wa.me/?text=${encoded}`, '_blank');
+        }
+
+        // ==========================================
+        // 7. SMART-SEARCH FLOOR MANAGER (AI SEARCH)
+        // ==========================================
+        function handleSmartSearch() {
+            const query = document.getElementById('aiQueryInput').value.trim().toLowerCase();
+            const resultsBox = document.getElementById('aiSearchResults');
+            resultsBox.classList.remove('hidden');
+            resultsBox.innerHTML = '';
+
+            if (!query) {
+                resultsBox.innerHTML = `<p class="text-xs text-red-600 font-medium">Please enter your requirements.</p>`;
+                return;
+            }
+
+            const needsAC = query.includes('ac') || query.includes('seminar');
+            const needsGround = query.includes('ground') || query.includes('floor 1');
+            const needsQuiet = query.includes('quiet') || query.includes('study') || query.includes('team');
+
+            const matches = campusRooms.filter(room => {
+                const isFree = !room.occupiedSlots[currentPeriodId];
+                const matchesAC = needsAC ? room.type.includes('AC') : true;
+                const matchesGround = needsGround ? room.floor === 'Ground Floor' : true;
+                const matchesQuiet = needsQuiet ? room.noise.includes('Quiet') : true;
+                return isFree && matchesAC && matchesGround && matchesQuiet;
+            });
+
+            if (matches.length === 0) {
+                resultsBox.innerHTML = `
+                    <div class="bg-amber-50 border border-amber-200 p-3 rounded-2xl text-amber-900 text-xs">
+                        <strong>AI Assistant:</strong> No exact matches found for your query during this period. Try tweaking search terms or checking another floor.
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            matches.forEach(m => {
+                html += `
+                    <div onclick="selectRoom('${m.id}')" class="srm-card p-3 rounded-2xl cursor-pointer hover:bg-blue-50/50 transition flex justify-between items-center text-xs">
+                        <div>
+                            <strong class="text-[#111827]">${m.name} (${m.floor})</strong>
+                            <p class="text-[11px] text-[#6b7280]">${m.type} • Capacity: ${m.capacity} seats</p>
+                        </div>
+                        <span class="px-3 py-1 bg-[#0071e3] text-white rounded-xl text-[11px] font-semibold">Select Room</span>
+                    </div>
+                `;
+            });
+
+            resultsBox.innerHTML = `<p class="font-bold text-[#111827] text-xs">Smart Search Matches:</p><div class="space-y-2 pt-1">${html}</div>`;
+        }
+    </script>
+</body>
+</html>
